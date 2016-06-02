@@ -6,7 +6,9 @@ package util;
 
 public class Util {
 
-
+    //LOG
     public static final String LOG_INFO = ">>> INFORMACAO:";
+    public static final String LOG_WARN = ">>> ATENCAO:";
+    public static final String LOG_ERR = ">>> ATENCAO:";
 
 }

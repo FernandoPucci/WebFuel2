@@ -1,12 +1,16 @@
 package webfuel2.com.br.webfuel2;
 
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -33,13 +37,14 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
+import controller.FacebookLoginController;
 import util.Util;
 
 public class MainActivity extends AppCompatActivity {
 
     private LoginButton loginButton;
     private CallbackManager callbackManager;
-    private ProfileTracker profileTracker;
+    private FacebookLoginController facebookLoginController;
     private Profile profile = null;
 
     @Override
@@ -50,6 +55,7 @@ public class MainActivity extends AppCompatActivity {
             //verificacao de acesso via facebook e log nas 'measures ad' do Facebook
             FacebookSdk.sdkInitialize(this.getApplicationContext());
             AppEventsLogger.activateApp(this);
+
         } catch (Exception ex) {
 
             Log.i(Util.LOG_INFO, "\n\n>>>>>> ERRO : " + ex.getMessage());
@@ -62,171 +68,107 @@ public class MainActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_main);
         callbackManager = CallbackManager.Factory.create();
+
         loginButton = (LoginButton) findViewById(R.id.login_button);
 
-        List<String> permissionNeeds = Arrays.asList("email", "public_profile", "user_friends");
+        // List<String> permissionNeeds = Arrays.asList("email", "public_profile", "user_friends");
 
-        loginButton.setReadPermissions(permissionNeeds);
 
         loginButton.registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
 
-            @Override
-            public void onSuccess(LoginResult loginResult) {
-                Log.i(Util.LOG_INFO, "onSuccess");
-                Log.i(Util.LOG_INFO, loginResult.getAccessToken().getUserId());
-
-                Set<String> listaPermissoes = loginResult.getRecentlyGrantedPermissions();
-
-                for (String s : listaPermissoes) {
-
-                    Log.i(Util.LOG_INFO, s);
-
-                }
-
-
-                //recupera graphrequest
-                GraphRequest request = GraphRequest.newMeRequest(loginResult.getAccessToken(), new GraphRequest.GraphJSONObjectCallback() {
-
                     @Override
-                    public void onCompleted(JSONObject object, GraphResponse response) {
-                        Log.i("LoginActivity", response.toString());
-                        // Get facebook data from login
-                        Bundle bFacebookData = getFacebookData(object);
-                        Log.i(Util.LOG_INFO,object.toString());        ;
-                        Log.i(Util.LOG_INFO,bFacebookData.toString());
-
-                    }
-                });
-                Bundle parameters = new Bundle();
-                parameters.putString("fields", "id, first_name, last_name, email,gender, birthday, location"); // Parámetros que pedimos a facebook
-                request.setParameters(parameters);
-                request.executeAsync();
+                    public void onSuccess(LoginResult loginResult) {
+                        Log.i(Util.LOG_INFO, "onSuccess");
 
 
-                profile = Profile.getCurrentProfile();
+                        if (facebookLoginController == null) {
 
-                if (profile == null) {
-                    profileTracker = new ProfileTracker() {
-                        @Override
-                        protected void onCurrentProfileChanged(Profile profile, Profile profile2) {
-                            // profile2 is the new profile
-                            Log.i("facebook - profile", profile2.getFirstName());
-                            Log.i(Util.LOG_INFO, profile2.getId());
-                            Log.i(Util.LOG_INFO, profile2.getFirstName());
-                            Log.i(Util.LOG_INFO, profile2.getLastName());
-                            Log.i(Util.LOG_INFO, profile2.getName());
-                            Log.i(Util.LOG_INFO, profile2.getName());
-                            Log.i(Util.LOG_INFO, profile2.getProfilePictureUri(1024, 1024).getPath());
-                            Profile.setCurrentProfile(profile2);
-                            //   profileTracker.stopTracking();
+                            facebookLoginController = new FacebookLoginController(loginResult);
+
+
                         }
 
-                    };
-                    profileTracker.startTracking();
-                    // no need to call startTracking() on profileTracker
-                    // because it is called by its constructor, internally.
-
-                    profile = Profile.getCurrentProfile();
+                        Log.w(Util.LOG_WARN, facebookLoginController.getLoggedUserData());
 
 
-                } else {
 
-                    profile = Profile.getCurrentProfile();
+//
+//
 
-                    Log.i(Util.LOG_INFO, profile.getId());
-                    Log.i(Util.LOG_INFO, profile.getFirstName());
-                    Log.i(Util.LOG_INFO, profile.getLastName());
-                    Log.i(Util.LOG_INFO, profile.getName());
-                    Log.i(Util.LOG_INFO, profile.getProfilePictureUri(1024, 1024).getPath());
+                        //    Log.i(Util.LOG_INFO, profile == null ? "NULO!!" : "OK!!!!!!!!!!!!");
 
+
+                    }
+
+                    @Override
+                    public void onCancel() {
+                        Log.i(Util.LOG_INFO, "onCancel");
+                    }
+
+                    @Override
+                    public void onError(FacebookException exception) {
+                        Log.v(Util.LOG_ERR, exception.getCause().toString());
+                    }
                 }
 
-
-                Log.i(Util.LOG_INFO, profile == null ? "NULO!!" : "OK!!!!!!!!!!!!");
-
-//                final Profile profile = Profile.getCurrentProfile();
-//
-//                if (profile != null) {
-//                    Log.i(Util.LOG_INFO, "Profile diferente de nulo");
-//                }else{
-//                    Log.i(Util.LOG_INFO, "Profile NULL!!");
-//                }
-//
-//                Log.i(Util.LOG_INFO, profile.getId());
-//                Log.i(Util.LOG_INFO, profile.getFirstName());
-//                Log.i(Util.LOG_INFO, profile.getLastName());
-//                Log.i(Util.LOG_INFO, profile.getName());
-//                Log.i(Util.LOG_INFO, profile.getProfilePictureUri(1024,1024).getPath());
-
-
-                //Toast.makeText(FacebookLogin.this,"Wait...",Toast.LENGTH_SHORT).show();
-                /*GraphRequest request = GraphRequest.newMeRequest(AccessToken.getCurrentAccessToken(),
-                        new GraphRequest.GraphJSONObjectCallback() {
-                            @Override
-                            public void onCompleted(JSONObject object, GraphResponse response) {
-                                try {
-                                    String email_id = object.getString("email");
-                                    String gender = object.getString("gender");
-                                    String facebook_id = profile.getId();
-                                    String f_name = profile.getFirstName();
-                                    String m_name = profile.getMiddleName();
-                                    String l_name = profile.getLastName();
-                                    String full_name = profile.getName();
-                                    String profile_image = profile.getProfilePictureUri(400, 400).toString();
-
-                                    Log.i(Util.LOG_INFO, facebook_id);
-                                    Log.i(Util.LOG_INFO, f_name);
-                                    Log.i(Util.LOG_INFO, m_name);
-                                    Log.i(Util.LOG_INFO, l_name);
-                                    Log.i(Util.LOG_INFO, full_name);
-                                    Log.i(Util.LOG_INFO, profile_image);
-                                    Log.i(Util.LOG_INFO, gender);
-                                    Log.i(Util.LOG_INFO, email_id + "");
-
-                                } catch (JSONException e) {
-                                    // TODO Auto-generated catch block
-                                    e.printStackTrace();
-
-                                }
-
-                            }
-
-                        });*/
-
-
-            }
-
-            @Override
-            public void onCancel() {
-                Log.i(Util.LOG_INFO, "onCancel");
-            }
-
-            @Override
-            public void onError(FacebookException exception) {
-                Log.v("LoginActivity", exception.getCause().toString());
-            }
-        });
+        );
 
 
         //BARRA DE FERRAMENTAS SUPERIOR
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+
         setSupportActionBar(toolbar);
 
 
         //BOTAO LATERAL
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
+        FloatingActionButton btnChecaPreco = (FloatingActionButton) findViewById(R.id.abreChecaPreco);
 
-                profile = Profile.getCurrentProfile();
-                Log.i(Util.LOG_INFO, profile == null ? "NULO!!" : "OK!!!!!!!!!!!!");
+        btnChecaPreco.setOnLongClickListener(new View.OnLongClickListener()
+
+                                             {
+                                                 @Override
+                                                 public boolean onLongClick(View view) {
+                                                     Snackbar.make(view, getString(R.string.txtChecaPreco), Snackbar.LENGTH_LONG)
+                                                             .setAction("Action", null).show();
+
+                                                     return false;
+                                                 }
+                                             }
+
+        );
+
+        btnChecaPreco.setOnHoverListener(new View.OnHoverListener()
+
+                                         {
+                                             @Override
+                                             public boolean onHover(View view, MotionEvent event) {
+
+                                                 Snackbar.make(view, getString(R.string.txtChecaPrecoHover), Snackbar.LENGTH_SHORT)
+                                                         .setAction("Action", null).show();
+
+                                                 return false;
+                                             }
+                                         }
+
+        );
+
+        btnChecaPreco.setOnClickListener(new View.OnClickListener()
+
+                                         {
+                                             @Override
+                                             public void onClick(View view) {
+
+                                                 Log.w(Util.LOG_WARN, facebookLoginController.getLoggedUserData());
+
+                                              //   profile = facebookLoginController.updateFacebookProfile();
+
+                                                 Log.i(Util.LOG_INFO, profile == null ? "NULO!!" : "OK!!!!!!!!!!!!");
 
 
-//                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-//                        .setAction("Action", null).show();
-            }
-        });
+                                             }
+                                         }
+
+        );
     }
 
     @Override

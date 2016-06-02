@@ -4,7 +4,9 @@
     <string name="facebook_app_id">116960248724589</string>
 
     <string name="app_name">WebFuel2</string>
-    <string name="action_settings">Settings</string>
+    <string name="action_settings">Sobre</string>
+    <string name="txtTelaPrincipal"><center><b>Bem vindo ao WebFuel2!</b></center> \n\n\nAcesse através de sua conta no Facebook, ou utilize o botão para calcular o Melhor Combustível.</string>
 
-
+    <string name="txtChecaPreco">Melhor abastecer com Álcool ou Gasolina?</string>
+    <string name="txtChecaPrecoHover">Abastecer com Álcool ou Gasolina?</string>
 </resources>
