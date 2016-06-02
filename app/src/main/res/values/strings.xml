@@ -1,0 +1,10 @@
+<resources>
+
+    <!-- Facebook login app id -->
+    <string name="facebook_app_id">116960248724589</string>
+
+    <string name="app_name">WebFuel2</string>
+    <string name="action_settings">Settings</string>
+
+
+</resources>
