@@ -19,7 +19,6 @@ import java.net.URL;
 
 import util.FacebookConstantes;
 import util.JsonUserBundles;
-import util.Util;
 
 /**
  * Created by fernando-pucci on 01/06/16.
@@ -113,6 +112,10 @@ public class FacebookLoginController {
 
     }
 
+    public Bundle getBundleFacebookData(){
+
+        return this.bFacebookData;
+    }
 
     private Bundle getFacebookDataController(JSONObject object) {
 

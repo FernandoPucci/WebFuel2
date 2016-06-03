@@ -1,29 +1,23 @@
 package webfuel2.com.br.webfuel2;
 
-import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
+import android.os.StrictMode;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.view.MotionEvent;
-import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
+import android.view.View;
 
 import com.facebook.CallbackManager;
 import com.facebook.FacebookCallback;
 import com.facebook.FacebookException;
 import com.facebook.FacebookSdk;
-
-import com.facebook.GraphRequest;
-import com.facebook.GraphResponse;
 import com.facebook.Profile;
-import com.facebook.ProfileTracker;
 import com.facebook.appevents.AppEventsLogger;
 import com.facebook.login.LoginResult;
 import com.facebook.login.widget.LoginButton;
@@ -33,12 +27,11 @@ import org.json.JSONObject;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
 
 import controller.FacebookLoginController;
+import util.JsonUtils;
 import util.Util;
+import ws.LoginWS;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -52,27 +45,28 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         try {
+
+            StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder()
+                    .permitAll().build();
+            StrictMode.setThreadPolicy(policy);
+
             //verificacao de acesso via facebook e log nas 'measures ad' do Facebook
             FacebookSdk.sdkInitialize(this.getApplicationContext());
             AppEventsLogger.activateApp(this);
 
         } catch (Exception ex) {
 
-            Log.i(Util.LOG_INFO, "\n\n>>>>>> ERRO : " + ex.getMessage());
+            Log.e(Util.LOG_ERR, "\n\n>>>>>> ERRO : " + ex.getMessage());
 
         }
 
+        setContentView(R.layout.activity_main);
 
         setContentView(R.layout.activity_main);
 
-
-        setContentView(R.layout.activity_main);
         callbackManager = CallbackManager.Factory.create();
 
         loginButton = (LoginButton) findViewById(R.id.login_button);
-
-        // List<String> permissionNeeds = Arrays.asList("email", "public_profile", "user_friends");
-
 
         loginButton.registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
 
@@ -89,15 +83,6 @@ public class MainActivity extends AppCompatActivity {
                         }
 
                         Log.w(Util.LOG_WARN, facebookLoginController.getLoggedUserData());
-
-
-
-//
-//
-
-                        //    Log.i(Util.LOG_INFO, profile == null ? "NULO!!" : "OK!!!!!!!!!!!!");
-
-
                     }
 
                     @Override
@@ -158,12 +143,24 @@ public class MainActivity extends AppCompatActivity {
                                              @Override
                                              public void onClick(View view) {
 
-                                                 Log.w(Util.LOG_WARN, facebookLoginController.getLoggedUserData());
+                                                 try {
+                                                    //Testes de chamadas a WS (nao seguro)
+                                                    LoginWS ws = new LoginWS();
 
-                                              //   profile = facebookLoginController.updateFacebookProfile();
+                                                    String retorno =  ws.enviarDadosUsuario(JsonUtils.converterBundleToJSON(facebookLoginController.getBundleFacebookData()));
 
-                                                 Log.i(Util.LOG_INFO, profile == null ? "NULO!!" : "OK!!!!!!!!!!!!");
+                                                     Log.w(Util.LOG_WARN, retorno);
 
+                                                     //TODO: verificar os dados do profile e ajustar a melhor forma de atualizá-los
+                                                     //   profile = facebookLoginController.updateFacebookProfile();
+                                                    // Log.i(Util.LOG_INFO, profile == null ? "NULO!!" : "OK!!!!!!!!!!!!");
+
+
+                                                 } catch (Exception ex) {
+
+                                                     Log.e(Util.LOG_ERR, ex.getMessage());
+
+                                                 }
 
                                              }
                                          }
